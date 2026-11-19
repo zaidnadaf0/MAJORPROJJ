@@ -10,7 +10,7 @@
 export type SimRole = 'customer' | 'mechanic' | 'admin';
 
 /** Mirrors the real request lifecycle (no separate offer collection is needed). */
-export type SimStatus = 'requested' | 'accepted' | 'on-the-way' | 'arrived' | 'service' | 'completed';
+export type SimStatus = 'requested' | 'accepted' | 'on-the-way' | 'arrived' | 'service' | 'completed' | 'cancelled';
 
 export type EstimateState = 'none' | 'pending' | 'approved' | 'rejected';
 export type PaymentState = 'none' | 'recorded';
@@ -119,6 +119,7 @@ export type SimAction =
   | { type: 'complete-job'; amountCents: number; durationMin: number }
   | { type: 'record-payment'; method: 'cash' | 'upi'; amountCents: number }
   | { type: 'set-autoplay'; playing: boolean }
+  | { type: 'cancel' }
   | { type: 'reset' };
 
 export interface SimResult {

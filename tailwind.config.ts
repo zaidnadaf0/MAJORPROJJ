@@ -1,20 +1,30 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * RoadAssist design tokens — "Midnight Navy + Warm Amber".
+ * RoadAssist design tokens — "Warm White + Indigo".
  *
  * The token NAMES are the public contract every page already uses (cream =
  * primary text, graphite = surfaces, grease = page ground, safety = accent,
- * steel = secondary text, line = borders). Only the VALUES are re-pointed, so
- * one theme change reaches every portal without per-page duplication.
+ * steel = secondary text, line = borders). Only the VALUES changed for the
+ * light reconstruction, so one theme change reaches every portal without
+ * per-page duplication.
  *
  * Palette (locked):
- *   page   #17251D   card   #1A202B   elevated #263236
- *   accent #D993EA   hover  #E8A267   text     #212B36
- *   muted  #8899A3   border #4A4A5A
+ *   page      #F6F6F4   warm white ground
+ *   card      #FFFFFF   surfaces
+ *   elevated  #F4F5F7   wells, hovers, inset panels
+ *   accent    #4F46E5   indigo-600
+ *   accent-2  #4338CA   indigo-700 (hover / link text)
+ *   text      #0E1525   near-black navy
+ *   muted     #5B6679   secondary copy
+ *   border    #E6E8EC   hairline
+ *
+ * Accent steps 300–600 are intentionally dark enough to be readable as TEXT on
+ * white (≥ 6:1). Tinted surfaces use alpha (`bg-safety-500/10`), so the same
+ * steps still work as backgrounds behind dark labels.
  *
  * Semantic colour families (success / warning / danger) stay distinct from the
- * purple accent so status is never conveyed by colour alone — every use also
+ * indigo accent so status is never conveyed by colour alone — every use also
  * carries a label or an icon.
  */
 const v = (name: string) => `rgb(var(${name}) / <alpha-value>)`;
@@ -24,51 +34,53 @@ export default {
   theme: {
     extend: {
       colors: {
-        /** Inputs, code blocks, inset wells. */
+        /** Page ground and input wells. */
         grease: {
-          DEFAULT: '#17253D',
-          soft: '#1A202E',
+          DEFAULT: '#F6F6F4',
+          soft: '#F1F1ED',
         },
-        /** Surfaces: cards, hover states, scaffold panels. */
+        /** Surfaces: cards, sidebar, hover states, scaffold panels. */
         graphite: {
-          DEFAULT: '#1A202E',
-          soft: '#263236',
-          card: '#1A202B',
-          hover: '#293E5E',
+          DEFAULT: '#FFFFFF',
+          soft: '#F4F5F7',
+          card: '#FFFFFF',
+          hover: '#F7F8FA',
+          /** Extend 'card' as a gradient-safe color name. */
+          ext: '#FFFFFF',
         },
-        /** Primary accent — Warm Amber. */
+        /** Primary accent — Indigo. */
         safety: {
-          50: '#FFF9E5',
-          100: '#F2F0E0',
-          200: '#D5C4C0',
-          300: '#C298A8',
-          400: '#D99532',
-          500: '#D99532',
-          600: '#B8860B',
-          700: '#97730A',
-          800: '#866708',
-          900: '#5C4A08',
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#4338CA',
+          400: '#4F46E5',
+          500: '#4F46E5',
+          600: '#4338CA',
+          700: '#3730A3',
+          800: '#312E81',
+          900: '#1E1B4B',
         },
         /** Backward-compatible alias for legacy auth/marketing classes. */
-        brand: '#D99532',
+        brand: '#4F46E5',
         /** Primary + secondary type. */
         cream: {
-          DEFAULT: '#F4F1EA',
-          dim: '#A1A1AA',
+          DEFAULT: '#0E1525',
+          dim: '#5B6679',
         },
         steel: {
-          300: '#C0C2D0',
-          400: '#A1A1AA',
-          500: '#8A8A95',
+          300: '#3F4A5F',
+          400: '#5B6679',
+          500: '#7C8798',
         },
         line: {
-          soft: '#4A5568',
-          strong: '#4A5568',
+          soft: '#E6E8EC',
+          strong: '#D5D9E0',
         },
-        success: { DEFAULT: '#38A752' },
-        warning: { DEFAULT: '#F5A524' },
+        success: { DEFAULT: '#15803D' },
+        warning: { DEFAULT: '#B45309' },
         danger: {
-          DEFAULT: '#F87171',
+          DEFAULT: '#B91C1C',
           /** Filled red surfaces that carry white text (pills, solid buttons). */
           solid: '#DC2626',
         },
@@ -79,7 +91,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
@@ -87,16 +99,37 @@ export default {
         md: '8px',
         lg: '10px',
         xl: '12px',
-        '2xl': '12px',
+        '2xl': '16px',
+        '3xl': '20px',
       },
       boxShadow: {
-        /** Dark elevation: a hairline lift plus a deep ambient shadow. */
-        card: '0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -8px rgb(0 0 0 / 0.9)',
-        clay: '0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -8px rgb(0 0 0 / 0.9)',
-        'clay-sm': '0 1px 2px rgb(0 0 0 / 0.3), 0 8px 20px -4px rgb(0 0 0 / 0.85)',
-        'clay-inset': 'inset 0 1px 2px rgb(0 0 0 / 0.45)',
-        /** Warm amber accent for primary actions only. */
-        glow: '0 8px 20px -8px rgb(217 149 0 / 0.55), 0 0 0 1px rgb(217 149 0 / 0.18)',
+        /** Light elevation: a hairline lift plus a soft ambient shadow. */
+        card: '0 1px 2px rgb(14 21 37 / 0.04), 0 10px 30px -18px rgb(14 21 37 / 0.18)',
+        clay: '0 1px 2px rgb(14 21 37 / 0.04), 0 10px 30px -18px rgb(14 21 37 / 0.18)',
+        'clay-sm': '0 1px 2px rgb(14 21 37 / 0.05), 0 4px 12px -8px rgb(14 21 37 / 0.14)',
+        'clay-inset': 'inset 0 1px 2px rgb(14 21 37 / 0.06)',
+        /** Indigo accent for primary actions only. */
+        glow: '0 8px 20px -10px rgb(79 70 229 / 0.55)',
+        /** Floating chrome (dropdowns, dialogs). */
+        pop: '0 4px 12px -4px rgb(14 21 37 / 0.10), 0 24px 48px -24px rgb(14 21 37 / 0.28)',
+      },
+      keyframes: {
+        'ra-fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'ra-fade-up': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'ra-shimmer': {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        'ra-fade-in': 'ra-fade-in 220ms ease-out both',
+        'ra-fade-up': 'ra-fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'ra-shimmer': 'ra-shimmer 1.4s ease-in-out infinite',
       },
     },
   },

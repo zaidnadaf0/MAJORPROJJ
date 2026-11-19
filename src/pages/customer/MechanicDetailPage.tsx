@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Badge, Button, Card, EmptyState, LoadingState, PageHeader } from '@/components/ui';
 import { getPublicMechanic, type PublicMechanic } from '@/lib/customer';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { FIXTURE_MECHANICS } from '@/lib/fixtures';
 
 /** Mechanic detail — projection fields only. No address, no coordinates, no contact. */

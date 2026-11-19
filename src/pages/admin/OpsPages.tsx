@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { RequireAdmin } from '@/components/RequireAdmin';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { Icon, type IconName } from '@/components/Icon';
 import { watchActiveRequests, watchAllRequests, type AdminRequest } from '@/lib/admin';

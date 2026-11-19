@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAuthRedirect, safeNextPath } from '@/components/RequireAuth';
+import { resolveAuthRedirect, safeNextPath } from '@/lib/authRouting';
 
 describe('RequireAuth redirect decisions', () => {
   it('renders (no redirect) while auth resolves', () => {

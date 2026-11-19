@@ -398,6 +398,25 @@ export function reduceSession(state: SimSession, action: SimAction, now = Date.n
     case 'reset':
       return { ok: true, state: emptySession() };
 
+    case 'cancel': {
+      if (!state.request) return fail(state, 'No request to cancel.');
+      if (state.status === 'cancelled') return fail(state, 'The request has already been cancelled.');
+      if (state.status === 'completed') return fail(state, 'Cannot cancel a completed request.');
+      if (state.status === 'service') return fail(state, 'Cannot cancel during service — complete the job first.');
+      if (state.status === 'arrived') return fail(state, 'Cannot cancel after arrival — complete or cancel from service state.');
+      return {
+        ok: true,
+        state: {
+          ...state,
+          status: 'cancelled' as const,
+          activity: [
+            ...state.activity,
+            { id: `a${state.activity.length + 1}`, at: now, actor: 'customer', label: 'Customer cancelled the breakdown request', tone: 'warning' }
+          ],
+        },
+      };
+    }
+
     default:
       return fail(state, 'Unknown action.');
   }

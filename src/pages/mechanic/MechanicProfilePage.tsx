@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useAuth } from '@/app/AuthProvider';
-import { RequireMechanic, useMechanicAccess } from '@/components/RequireMechanic';
+import { useAuth } from '@/lib/useAuth';
+import { RequireMechanic } from '@/components/RequireMechanic';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Badge, Button, Card, DemoNotice, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { getMyContact, setAvailability, updateMyContact } from '@/lib/mechanic';
 import { DEMO_MECHANIC_PROFILE } from '@/lib/fixtures';
@@ -79,7 +80,7 @@ export function MechanicProfilePage() {
                 <Badge tone={(demoMode ? DEMO_MECHANIC_PROFILE.isAvailable : record?.isAvailable) ? 'success' : 'neutral'}>{(demoMode ? DEMO_MECHANIC_PROFILE.isAvailable : record?.isAvailable) ? 'available' : 'offline'}</Badge>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {displaySpecialties.map((s) => (
+                {displaySpecialties.map((s: string) => (
                   <span key={s} className="rounded-full border border-line-soft px-2.5 py-1 text-xs text-steel-300">{s}</span>
                 ))}
               </div>

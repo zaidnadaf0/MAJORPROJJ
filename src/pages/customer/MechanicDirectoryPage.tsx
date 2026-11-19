@@ -4,7 +4,7 @@ import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader }
 import { watchPublicMechanics, type PublicMechanic } from '@/lib/customer';
 import { explainMechanic, rankWithML } from '@/lib/mlRank';
 import { FIXTURE_MECHANICS } from '@/lib/fixtures';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 
 const FILTERS = ['all', 'tow', 'battery', 'engine', 'tyre', 'general'] as const;
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Icon } from '@/components/Icon';
-import { RequireMechanic, useMechanicAccess } from '@/components/RequireMechanic';
+import { RequireMechanic } from '@/components/RequireMechanic';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, LoadingState, MetricCard, PageHeader, SectionHeading } from '@/components/ui';
 import { setAvailability, summarizeEarnings, watchIncoming, watchMyActiveJobs, watchMyJobHistory, type ServiceRequest } from '@/lib/mechanic';
 import { DEMO_MECHANIC_PROFILE, getDemoMechanicActive, getDemoMechanicHistory, getDemoMechanicIncoming, getDemoOfferHistory } from '@/lib/fixtures';

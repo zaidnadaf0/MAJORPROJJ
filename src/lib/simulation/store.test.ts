@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { simDispatch } from '@/lib/simulation/store';
+import { stageViews } from '@/lib/simulation/scenario';
 import { SIM_SCENARIO } from '@/lib/simulation/scenario';
 import { autoStep, emptySession, journeySnapshot, reduceSession } from '@/lib/simulation/store';
 import type { SimAction, SimSession } from '@/lib/simulation/types';
@@ -45,6 +47,10 @@ const ESTIMATE: SimAction = {
   amountCents: SIM_SCENARIO.estimate.amountCents,
   durationMin: SIM_SCENARIO.estimate.durationMin,
 };
+
+/*============================================================
+  scenario lifecycle
+  ============================================================*/
 
 describe('simulation — scenario lifecycle', () => {
   it('starts idle and creates the fictional request on Start', () => {
@@ -103,6 +109,10 @@ describe('simulation — scenario lifecycle', () => {
     expect(afterArrival.state.status).toBe('service');
   });
 });
+
+/*============================================================
+  journey, distance and ETA
+  ============================================================*/
 
 describe('simulation — journey, distance and ETA', () => {
   it('starts at the workshop with the full route remaining', () => {
@@ -192,6 +202,10 @@ describe('simulation — journey, distance and ETA', () => {
   });
 });
 
+/*============================================================
+  estimate and completion gate
+  ============================================================*/
+
 describe('simulation — estimate and completion gate', () => {
   it('requires arrival and service before an estimate', () => {
     const duringTravel = reduceSession(travelling(), ESTIMATE, T0);
@@ -241,6 +255,10 @@ describe('simulation — estimate and completion gate', () => {
   });
 });
 
+/*============================================================
+  payment and reset
+  ============================================================*/
+
 describe('simulation — payment and reset', () => {
   function completed(): SimSession {
     return run([ESTIMATE, { type: 'decide-estimate', decision: 'approve' }, { type: 'complete-job', amountCents: 49_900, durationMin: 38 }], inService());
@@ -269,6 +287,10 @@ describe('simulation — payment and reset', () => {
     expect(reset.status).toBe('requested');
   });
 });
+
+/*============================================================
+  guided controller
+  ============================================================*/
 
 describe('simulation — guided controller', () => {
   it('drives the journey, then waits for the customer approval', () => {
@@ -315,5 +337,94 @@ describe('simulation — guided controller', () => {
 
   it('does nothing from the idle state', () => {
     expect(autoStep(emptySession())).toBeNull();
+  });
+});
+
+/*============================================================
+  simulation — cancellation
+  ============================================================*/
+
+describe('simulation — cancellation', () => {
+  const T0 = Date.UTC(2026, 10, 2, 8, 50);
+
+  it('cancels the request while preserving the request and activity timeline', () => {
+    const state = start(); // Creates requested session
+    const cancelled = reduceSession(state, { type: 'cancel' }, T0);
+    expect(cancelled.ok).toBe(true);
+    expect(cancelled.state.status).toBe('cancelled');
+    const req = cancelled.state.request;
+    expect(req).not.toBeNull(); // Request PRESERVED
+    expect(req!.ref).toBe('RA-SIM-1001');
+    expect(req!.customerName).toBe(SIM_SCENARIO.customer.name);
+    expect(req!.vehicle.plate).toBe('KA01DEMO1');
+    expect(req!.category).toBe('battery');
+    // Activity timeline PRESERVED and new cancellation event added
+    expect(cancelled.state.activity.length).toBeGreaterThan(0);
+    const cancelEvent = cancelled.state.activity.find((a) => a.label.includes('cancelled'));
+    expect(cancelEvent).toBeDefined();
+    expect(cancelEvent!.actor).toBe('customer');
+    expect(cancelEvent!.tone).toBe('warning');
+  });
+
+  it('refuses to cancel when no request exists', () => {
+    const state = emptySession();
+    const result = reduceSession(state, { type: 'cancel' }, T0);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/No request/i);
+  });
+
+  it('refuses to cancel a duplicated cancellation', () => {
+    const state = start();
+    const firstCancel = reduceSession(state, { type: 'cancel' }, T0);
+    expect(firstCancel.ok).toBe(true);
+    const secondCancel = reduceSession(firstCancel.state, { type: 'cancel' }, T0);
+    expect(secondCancel.ok).toBe(false);
+    expect(secondCancel.reason).toMatch(/already been cancelled/i);
+  });
+
+  it('refuses to cancel a completed request', () => {
+    const completed = run(
+      [ESTIMATE, { type: 'decide-estimate', decision: 'approve' }, { type: 'complete-job', amountCents: 49_900, durationMin: 38 }],
+      inService(),
+    );
+    const result = reduceSession(completed, { type: 'cancel' }, T0);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/Cannot cancel a completed request/i);
+  });
+
+  it('refuses to cancel during service', () => {
+    const inSvc = inService();
+    const result = reduceSession(inSvc, { type: 'cancel' }, T0);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/Cannot cancel during service/i);
+  });
+
+  it('refuses to cancel after arrival', () => {
+    const arrivedState = arrived();
+    const result = reduceSession(arrivedState, { type: 'cancel' }, T0);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/Cannot cancel after arrival/i);
+  });
+
+  it('reset still restores to empty session independently of cancellation', () => {
+    const state = start();
+    simDispatch({ type: 'cancel' }, T0); // simulate cancel
+    // After cancel, reset should still work
+    const resetResult = reduceSession(state, { type: 'reset' }, T0);
+    expect(resetResult.ok).toBe(true);
+    expect(resetResult.state).toEqual(emptySession());
+    expect(resetResult.state.status).toBe('requested');
+  });
+
+  it('cancelled status is persistent and visible in stage views', () => {
+    const state = start();
+    const cancelled = reduceSession(state, { type: 'cancel' }, T0).state;
+    const views = stageViews(cancelled);
+    const requestedView = views.find((v) => v.key === 'requested');
+    // Cancelled request should show as 'done' in stage views
+    expect(requestedView!.state).toBe('done');
+    // The 'next' stage should be 'accepted' but with cancelled indication
+    const acceptedView = views.find((v) => v.key === 'accepted');
+    expect(acceptedView!.state).toBe('done');
   });
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { downloadCsv, toCsv } from '@/lib/analytics';
 import { getVehicle, watchMyRequests, watchRequest, type ServiceRequest, type Vehicle } from '@/lib/customer';

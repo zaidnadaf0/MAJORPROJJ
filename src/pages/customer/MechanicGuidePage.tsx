@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { createRequest, listVehicles, watchPublicMechanics, type Vehicle } from '@/lib/customer';
 import { useGeolocation } from '@/lib/geolocation';

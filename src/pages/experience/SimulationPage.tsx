@@ -47,6 +47,7 @@ function statusLabel(session: SimSession): string {
     case 'accepted': return 'Offer accepted';
     case 'on-the-way': return 'Mechanic on the way';
     case 'arrived': return 'Mechanic arrived';
+    case 'cancelled': return 'Cancelled — request preserved';
     case 'service': return session.estimate.state === 'pending' ? 'In service — estimate awaiting approval' : 'In service';
     case 'completed': return 'Repair completed — payment pending';
   }
@@ -312,9 +313,13 @@ function CustomerPanel({
         </dl>
 
         {session.status === 'requested' && (
-          <p className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs leading-5 text-warning">
-            Offer sent to nearby mechanics. The dispatch service owns assignment — you cannot pick the mechanic manually.
-          </p>
+          <div className="mt-2">
+            <p className="text-sm font-semibold text-cream">Cancel request</p>
+            <Button size="sm" data-testid="sim-cancel" onClick={() => act({ type: 'cancel' })}>Cancel</Button>
+            <p className="mt-1 text-xs leading-5 text-warning">
+              Offer sent to nearby mechanics. The dispatch service owns assignment — you cannot pick the mechanic manually.
+            </p>
+          </div>
         )}
         {session.mechanic && session.status !== 'completed' && (
           <p className="mt-3 rounded-lg border border-safety-500/25 bg-safety-500/10 px-3 py-2 text-xs leading-5 text-steel-300">

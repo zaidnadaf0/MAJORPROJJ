@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -19,58 +19,17 @@ import {
   resolveAuthHome,
   type ProfileHint,
 } from '@/lib/userProfile';
-
-export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
-
-export interface SignUpInput {
-  displayName: string;
-  email: string;
-  password: string;
-}
-
-export interface AuthContextValue {
-  status: AuthStatus;
-  /** True after the current user's role hint and admin claim have resolved. */
-  authorizationResolved: boolean;
-  /** False when no Firebase config is present — auth calls throw a clear error. */
-  configured: boolean;
-  user: User | null;
-  emailVerified: boolean;
-  /** Role hint from `users/{uid}.role`. UI routing convenience ONLY — never authority. */
-  profileRole: ProfileHint | null;
-  /**
-   * Admin authority from the Firebase ID-token custom claim.
-   * null = unknown (or unconfigured). Minted server-side in a later phase;
-   * until then this is always false for real users. Never set from the client.
-   */
-  isAdmin: boolean | null;
-  home: string;
-  signUp: (input: SignUpInput) => Promise<void>;
-  /** Resolves to the correct portal home after role/claim hints are loaded. */
-  signIn: (email: string, password: string, portal?: 'customer' | 'mechanic' | 'admin') => Promise<string>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  resendVerification: () => Promise<void>;
-  /** Force-refresh the ID token (picks up a freshly minted claim). */
-  refreshClaim: () => Promise<void>;
-  /** Explicit local presentation mode. Demo records never touch Firebase. */
-  demoMode: boolean;
-  setDemoMode: (enabled: boolean) => void;
-  /** Changes whenever another demo tab mutates the isolated workflow. */
-  demoRevision: number;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import {
+  AuthContext,
+  type AuthContextValue,
+  type AuthStatus,
+  type SignUpInput,
+} from '@/lib/authContext';
 
 const ROLE_TIMEOUT_MS = 8000;
 const DEMO_MODE_KEY = 'roadassist.demoMode';
 
 function initialDemoMode(): boolean {
-  // An EXPLICIT env mode always wins over a stale localStorage preference.
-  // Without this precedence a browser that once enabled demo mode keeps
-  // serving fixtures forever — including during an emulator-verification run
-  // whose whole point is to prove real Firestore writes. That is exactly how
-  // a "live" journey can pass while writing nothing.
   const explicit = import.meta.env.VITE_ROADASSIST_MODE;
   if (explicit === 'live') return false;
   if (explicit === 'demo') return true;
@@ -80,7 +39,6 @@ function initialDemoMode(): boolean {
     if (stored === 'true') return true;
     if (stored === 'false') return false;
   }
-  // No explicit mode: local Vite presentation builds default to demo.
   return import.meta.env.DEV;
 }
 
@@ -169,11 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setStatus('authenticated');
       setAuthorizationResolved(false);
-      // Resolve hint + claim without blocking the shell on either. A stale
-      // resolution must never decorate a NEWER session: on rapid
-      // sign-out/sign-in the previous user's profile/claim promise can
-      // settle after the reset, so each callback re-checks that the
-      // current auth user is still the one it was started for.
       const uid = u.uid;
       void Promise.all([readProfileRole(uid), readAdminClaim(u)]).then(([role, admin]) => {
         if (firebaseAuth()?.currentUser?.uid === uid) {
@@ -195,7 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       throw new Error(mapAuthError(err), { cause: err });
     }
-    // Profile foundation: customer-only role (see userProfile.ts contract).
     try {
       const db = firebaseDb();
       if (db) {
@@ -207,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch {
-      // Auth succeeded; the profile sync can be retried later. Never strand signup.
       console.warn('[auth] profile write failed; continuing signed in');
     }
     try {
@@ -304,10 +255,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
-  return ctx;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { watchAuditEvents, type AdminAuditEvent } from '@/lib/admin';
 import { DEMO_AUDIT_EVENTS } from '@/lib/fixtures';
@@ -8,18 +8,15 @@ import { shortRef } from '@/lib/reference';
 
 export function LogsPage() {
   const { demoMode } = useAuth();
-  const [items, setItems] = useState<AdminAuditEvent[] | null>(null);
+  const [liveItems, setLiveItems] = useState<AdminAuditEvent[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const items = demoMode ? DEMO_AUDIT_EVENTS : liveItems;
   const [feedError, setFeedError] = useState<false | 'denied' | true>(false);
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
-    if (demoMode) {
-      setItems(DEMO_AUDIT_EVENTS);
-      setFeedError(false);
-      return;
-    }
-    setFeedError(false);
-    const unsub = watchAuditEvents(setItems, 100, (err) => {
+    if (demoMode) return; // Already derived during render
+    const unsub = watchAuditEvents(setLiveItems, 100, (err) => {
       const code = (err as { code?: string } | null)?.code ?? '';
       setFeedError(code.includes('permission-denied') ? 'denied' : true);
     });

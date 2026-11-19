@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
-import { useMechanicAccess } from '@/components/RequireMechanic';
+import { useAuth } from '@/lib/useAuth';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Button, ErrorState, LoadingState } from '@/components/ui';
 
 /** Navigation gate for the customer workspace; backend rules remain authoritative. */

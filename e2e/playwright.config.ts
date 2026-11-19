@@ -47,7 +47,7 @@ export default defineConfig({
     // `--mode emulator` makes Vite load .env.emulator. If that file is
     // missing the app starts unconfigured (never pointed at production), and
     // globalSetup has already refused to run.
-    command: 'node node_modules/vite/bin/vite.js --mode emulator --port 5173 --strictPort',
+    command: 'node node_modules/vite/bin/vite.js --mode emulator --port 5173 --strictPort --host',
     cwd: '..',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: false,

@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
-import { safeNextPath } from '@/components/RequireAuth';
-import { useMechanicAccess } from '@/components/RequireMechanic';
+import { useAuth } from '@/lib/useAuth';
+import { safeNextPath } from '@/lib/authRouting';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Button, Field, Input } from '@/components/ui';
 
 /**

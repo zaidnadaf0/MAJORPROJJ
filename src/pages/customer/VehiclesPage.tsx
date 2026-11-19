@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { addVehicle, deleteVehicle, listVehicles, nextDefaultAfterDelete, setDefaultVehicle, type Vehicle } from '@/lib/customer';
 import { DEMO_CUSTOMER_VEHICLES } from '@/lib/fixtures';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
 import { Button, Card, DemoNotice, ErrorState, LoadingState, PageHeader } from '@/components/ui';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { downloadCsv, toCsv } from '@/lib/analytics';
 import { listAllRequestsOnce, watchAllMechanics, type AdminMechanic, type AdminRequest } from '@/lib/admin';
 import { DEMO_ADMIN_MECHANICS, getDemoAdminRequests } from '@/lib/fixtures';
@@ -12,30 +12,28 @@ import { DEMO_ADMIN_MECHANICS, getDemoAdminRequests } from '@/lib/fixtures';
  */
 export function ReportsHubPage() {
   const { demoMode } = useAuth();
-  const [requests, setRequests] = useState<AdminRequest[] | null>(null);
-  const [mechanics, setMechanics] = useState<AdminMechanic[] | null>(null);
+  const [liveRequests, setLiveRequests] = useState<AdminRequest[] | null>(null);
+  const [liveMechanics, setLiveMechanics] = useState<AdminMechanic[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const requests = demoMode ? getDemoAdminRequests() : liveRequests;
+  const mechanics = demoMode ? DEMO_ADMIN_MECHANICS : liveMechanics;
   const [feedError, setFeedError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setFeedError(false);
-    if (demoMode) {
-      setRequests(getDemoAdminRequests());
-      setMechanics(DEMO_ADMIN_MECHANICS);
-      return () => { cancelled = true; };
-    }
+    if (demoMode) return; // Already derived during render
     listAllRequestsOnce('all', 200)
       .then((r) => {
-        if (!cancelled) setRequests(r);
+        if (!cancelled) setLiveRequests(r);
       })
       .catch(() => {
         if (!cancelled) {
-          setRequests([]);
+          setLiveRequests([]);
           setFeedError(true);
         }
       });
     const unsub = watchAllMechanics((m) => {
-      if (!cancelled) setMechanics(m);
+      if (!cancelled) setLiveMechanics(m);
     }, 200, () => setFeedError(true));
     return () => {
       cancelled = true;

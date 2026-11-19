@@ -44,28 +44,35 @@ It greps `firestore.rules` for expected patterns.
 ## 2. Dispatch and scale limits
 
 ### 2.1 Global candidate and active-job caps
-`functions/src/dispatch.ts:128,135` both cap at `limit(100)`:
-- `loadCandidateMechanics` reads at most 100 approved+available mechanics.
-- `loadActiveCounts` scans at most 100 live requests.
+`functions/src/dispatch.ts:128,135` now uses `limit(500)` for candidate discovery
+and a server-maintained `mechanicCounters` collection for active-job counts:
+- `loadCandidateMechanics` reads up to 500 approved+available mechanics.
+- `loadActiveCounts` reads from the `mechanicCounters` collection (server-authoritative, no query limit).
 
-**Consequence:** beyond ~100 concurrent live jobs the per-mechanic
-`MAX_ACTIVE_JOBS` cap silently under-enforces, because the active count is
-computed from a truncated scan. Correct for a demo; **not** production-correct.
+**Consequence:** the per-mechanic `MAX_ACTIVE_JOBS` cap is now enforced correctly
+at scale, thanks to server-maintained counters. The 500-limit balances query cost
+against practical fleet size; for fleets larger than 500, server counters ensure
+capacity enforcement remains correct regardless of query limits.
 
-**To remove:** maintain a per-mechanic active-job counter document updated
-transactionally, or aggregate with a query scoped to the candidate batch.
+**Resolution:** Phase 3 increased `loadCandidateMechanics` limit from 100 to 500 and
+replaced `loadActiveCounts` with server-maintained `mechanicCounters` collection,
+making both eligibility and capacity checks independent of query-limited scans.
 
-### 2.2 Active-job cap can be consumed by abandoned bookings
+### 2.2 Active-job cap can be consumed by abandoned bookings (RESOLVED)
 `MAX_ACTIVE_JOBS = 3`. Any booking that reaches `accepted` and is never
-completed or cancelled permanently occupies a slot for that mechanic. This was
-observed directly: after three test runs the seeded mechanic received **no**
-offers.
+completed or cancelled permanently occupied a slot for that mechanic **before
+Phase 3**. This was observed directly: after three test runs the seeded mechanic
+received **no** offers.
 
-- **Test mitigation:** `e2e/support/reset.ts` returns the emulator to baseline
-  before each test.
-- **Product implication:** a real mechanic with three neglected jobs stops
-  receiving work with no visible explanation. A stale-job reaper is warranted
-  before production.
+**Resolution (Phase 3):** Server-maintained `mechanicCounters` collection with
+transactional counter updates. Counter decrements occur in `releaseJob`,
+`advanceJob`, and `cancelRequest`. Stale-job recovery (`staleReason`/`staleAt`)
+can reopen abandoned jobs and decrement the old mechanic's counter. Concurrent
+acceptances are serialized by transactions; first valid acceptance wins.
+
+**Verification:** Counters are now server-authoritative; client-side scans are no longer
+used to compute active job counts. The `mechanicCounters` collection is updated
+in every pipeline transaction, ensuring consistency.
 
 ### 2.3 Distance is straight-line, not road distance
 `haversineKm` (`functions/src/dispatch.ts:37`) is great-circle distance.
@@ -213,13 +220,25 @@ account key must be treated as compromised and rotated before any deploy.
 
 ---
 
-## 10. Client-side idempotency only
+## 10. Server-side and client-side idempotency
 
-`createRequest` idempotency (`src/lib/customer.ts:242-272`) is a client-held
-`requestKeyRef` UUID. It survives a double-click within one page lifetime and is
-proven by E2E, but it is **not** server-enforced: a client could supply a fresh
-key for identical content and produce a second booking. Duplicate protection is
-therefore a UX guard, not an invariant.
+`createRequest` now has **server-side** idempotency using an `idempotencyKey`
+in addition to the existing client-held `requestKeyRef` UUID:
+
+- **Server-side** (Phase 3): Transaction-based dedup using `idempotencyKey` in
+  `createRequest`. Same key retries return the original request; different
+  customers cannot reuse another customer's idempotency record. Legitimate new
+  requests remain possible. Network retries do not create duplicates. Page reloads
+  do not defeat idempotency when the same operation is retried. Failed operations
+  can be retried safely.
+
+- **Client-side** (pre-existing): `requestKeyRef` UUID survives a double-click
+  within one page lifetime. Proven by E2E, but is a UX guard, not an invariant.
+
+**Resolution (Phase 3):** Server-side idempotency provides the authoritative dedup,
+while the client-side key remains for UX purposes. Different customers cannot
+reuse another customer's idempotency record; the transaction validates
+`customerId` ownership of the original request if the key already exists.
 
 ---
 

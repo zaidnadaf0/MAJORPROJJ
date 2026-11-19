@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { firebaseProjectId } from '@/lib/firebase';
 import { Badge, Button, Card, PageHeader } from '@/components/ui';
 import { DEMO_CUSTOMER_PROFILE, resetDemoState } from '@/lib/fixtures';

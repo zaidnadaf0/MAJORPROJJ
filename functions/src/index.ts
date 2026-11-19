@@ -11,6 +11,7 @@ initializeApp();
 const db = getFirestore();
 
 export { grantAdminRole, revokeAdminRole } from './admin';
+export { recaptureJob, releaseStaleRequest } from './recovery';
 export { setMechanicApproval } from './approval';
 
 /**

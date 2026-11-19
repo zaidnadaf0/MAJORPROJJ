@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUTE_DEFS } from '@/routes';
+import { ROUTE_DEFS } from '@/lib/routeDefs';
 import { CUSTOMER_NAV, MECHANIC_NAV, ADMIN_NAV } from '@/lib/nav';
 import { FIXTURE_MECHANICS, FIXTURE_SERVICES } from '@/lib/fixtures';
 

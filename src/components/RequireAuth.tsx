@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, type AuthStatus } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
+import { resolveAuthRedirect } from '@/lib/authRouting';
 import { LoadingState } from '@/components/ui';
 
 /**
@@ -13,25 +14,6 @@ import { LoadingState } from '@/components/ui';
  * boundary. Role-based enforcement arrives with M3 Firestore rules; until
  * then every authenticated user may reach every portal shell.
  */
-export function resolveAuthRedirect(
-  status: AuthStatus,
-  configured: boolean,
-  pathname: string,
-): string | null {
-  if (status === 'loading') return null;
-  if (!configured || status === 'unauthenticated') {
-    return `/login?next=${encodeURIComponent(pathname)}`;
-  }
-  return null;
-}
-
-/** Returns true only for same-origin in-app paths (open-redirect guard for `next`). */
-export function safeNextPath(raw: string | null): string | null {
-  if (!raw) return null;
-  if (!raw.startsWith('/') || raw.startsWith('//')) return null;
-  return raw;
-}
-
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { status, configured } = useAuth();
   const location = useLocation();

@@ -82,6 +82,7 @@ export type SimStageKey =
   | 'service'
   | 'estimate'
   | 'completed'
+  | 'cancelled'
   | 'payment';
 
 export interface SimStage {
@@ -123,6 +124,7 @@ export function stageViews(session: SimSession): StageView[] {
     service: status === 'service' || status === 'completed',
     estimate: session.estimate.state === 'approved',
     completed: status === 'completed',
+    cancelled: status === 'cancelled',
     payment: session.payment.state === 'recorded',
   };
 

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { watchRequestOffers } from '@/lib/dispatch';
 
 // Leaflet touches `window` at import: lazy-load so node/unit contexts that

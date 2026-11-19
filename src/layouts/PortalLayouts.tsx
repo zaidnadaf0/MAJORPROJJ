@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon';
 import { ADMIN_NAV, ADMIN_TABS, MECHANIC_NAV, MECHANIC_TABS } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 import { Brand, type LayoutProps } from './PublicLayout';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { badgeLabel, useUnreadCount } from '@/lib/useUnreadCount';
 import { DemoNotice } from '@/components/ui';
 

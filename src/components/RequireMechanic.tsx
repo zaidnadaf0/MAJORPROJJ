@@ -1,53 +1,14 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
-import { accessForRecord, watchMyMechanicRecord, type MechanicAccess, type MechanicRecord } from '@/lib/mechanic';
-import { DEMO_MECHANIC_PROFILE } from '@/lib/fixtures';
+import { Navigate, Link } from 'react-router-dom';
+import { useAuth } from '@/lib/useAuth';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Button, EmptyState, LoadingState, PageHeader } from '@/components/ui';
+import type { ReactNode } from 'react';
 
 /**
  * M5 mechanic UX guard — navigation convenience ONLY, never a security
  * boundary (M3 Firestore rules enforce everything). Reads the trusted
  * `mechanics/{uid}` record and renders honest approval-state screens.
  */
-export function useMechanicAccess(demoPreview = false, skipLiveCheck = false): { access: MechanicAccess | 'loading' | 'error'; record: MechanicRecord | null; retry: () => void } {
-  const { user, status } = useAuth();
-  const [record, setRecord] = useState<MechanicRecord | null | 'loading' | 'error'>('loading');
-  const [attempt, setAttempt] = useState(0);
-
-  const retry = useCallback(() => setAttempt((value) => value + 1), []);
-
-  useEffect(() => {
-    if (status === 'loading') return;
-    if (demoPreview) {
-      setRecord({
-        ...DEMO_MECHANIC_PROFILE,
-        approved: DEMO_MECHANIC_PROFILE.approved ?? false,
-        isAvailable: DEMO_MECHANIC_PROFILE.isAvailable ?? false,
-        specialties: DEMO_MECHANIC_PROFILE.specialties ?? [],
-      });
-      return;
-    }
-    if (skipLiveCheck) {
-      setRecord(null);
-      return;
-    }
-    if (!user) {
-      setRecord(null);
-      return;
-    }
-    setRecord('loading');
-    const unsub = watchMyMechanicRecord(user.uid, (r) => setRecord(r), () => setRecord('error'));
-    if (!unsub) setRecord('error');
-    return () => {
-      if (unsub) unsub();
-    };
-  }, [user, status, attempt, demoPreview, skipLiveCheck]);
-
-  if (record === 'loading') return { access: 'loading', record: null, retry };
-  if (record === 'error') return { access: 'error', record: null, retry };
-  return { access: accessForRecord(record), record, retry };
-}
 
 function StatusShell({ title, children }: { title: string; children: ReactNode }) {
   return (

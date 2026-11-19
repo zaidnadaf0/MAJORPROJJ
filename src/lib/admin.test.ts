@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAdminGate } from '@/components/RequireAdmin';
+import { resolveAdminGate } from '@/lib/adminGate';
 import { computeStats, findExceptions, mechanicStates, type AdminMechanic, type AdminRequest, type AdminUser } from '@/lib/admin';
 import { DEMO_ADMIN_MECHANICS, DEMO_ADMIN_OFFERS, DEMO_ADMIN_REQUESTS, DEMO_ADMIN_REVIEWS, DEMO_ADMIN_USERS, DEMO_ADMIN_VEHICLES } from '@/lib/fixtures';
 

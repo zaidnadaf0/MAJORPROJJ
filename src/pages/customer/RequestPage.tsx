@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Button, Card, DemoNotice, EmptyState, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { useGeolocation } from '@/lib/geolocation';
 import { DEFAULT_CENTER } from '@/lib/mapProvider';

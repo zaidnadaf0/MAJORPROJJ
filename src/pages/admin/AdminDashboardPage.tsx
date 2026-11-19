@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RequireAdmin } from '@/components/RequireAdmin';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, LoadingState, MetricCard, PageHeader, SectionHeading } from '@/components/ui';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { computeStats, findExceptions, listAllRequestsOnce, watchAllMechanics, watchAllUsers, type AdminMechanic, type AdminRequest, type AdminUser } from '@/lib/admin';
 import { DEMO_ADMIN_MECHANICS, DEMO_ADMIN_REVIEWS, DEMO_ADMIN_USERS, DEMO_AUDIT_EVENTS, getDemoAdminRequests } from '@/lib/fixtures';
 import { requestRef } from '@/lib/reference';
@@ -29,26 +29,24 @@ function statusTone(status: AdminRequest['status']): 'neutral' | 'success' | 'wa
 }
 
 export function AdminDashboardPage() {
-  const [requests, setRequests] = useState<AdminRequest[] | null>(null);
-  const [users, setUsers] = useState<AdminUser[] | null>(null);
-  const [mechanics, setMechanics] = useState<AdminMechanic[] | null>(null);
+  const { demoMode } = useAuth();
+  const [liveRequests, setLiveRequests] = useState<AdminRequest[] | null>(null);
+  const [liveUsers, setLiveUsers] = useState<AdminUser[] | null>(null);
+  const [liveMechanics, setLiveMechanics] = useState<AdminMechanic[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const requests = demoMode ? getDemoAdminRequests() : liveRequests;
+  const users = demoMode ? DEMO_ADMIN_USERS : liveUsers;
+  const mechanics = demoMode ? DEMO_ADMIN_MECHANICS : liveMechanics;
   const [feedError, setFeedError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const { demoMode } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
-    if (demoMode) {
-      setRequests(getDemoAdminRequests());
-      setUsers(DEMO_ADMIN_USERS);
-      setMechanics(DEMO_ADMIN_MECHANICS);
-      setFeedError(false);
-      return () => { cancelled = true; };
-    }
+    if (demoMode) return; // Already derived during render
     setFeedError(false);
-    listAllRequestsOnce('all', 200).then((r) => { if (!cancelled) setRequests(r); }).catch(() => { if (!cancelled) { setRequests([]); setFeedError(true); } });
-    const a = watchAllUsers((u) => { if (!cancelled) setUsers(u); }, 100, () => { if (!cancelled) { setUsers([]); setFeedError(true); } });
-    const b = watchAllMechanics((m) => { if (!cancelled) setMechanics(m); }, 200, () => { if (!cancelled) { setMechanics([]); setFeedError(true); } });
+    listAllRequestsOnce('all', 200).then((r) => { if (!cancelled) setLiveRequests(r); }).catch(() => { if (!cancelled) { setLiveRequests([]); setFeedError(true); } });
+    const a = watchAllUsers((u) => { if (!cancelled) setLiveUsers(u); }, 100, () => { if (!cancelled) { setLiveUsers([]); setFeedError(true); } });
+    const b = watchAllMechanics((m) => { if (!cancelled) setLiveMechanics(m); }, 200, () => { if (!cancelled) { setLiveMechanics([]); setFeedError(true); } });
     return () => { cancelled = true; if (a) a(); if (b) b(); };
   }, [demoMode, retry]);
 
@@ -64,12 +62,13 @@ export function AdminDashboardPage() {
   const responseTimes = displayRequests.map((r) => r.demoResponseMinutes).filter((n): n is number => typeof n === 'number');
   const avgResponse = usingDemo && responseTimes.length ? responseTimes.reduce((sum, n) => sum + n, 0) / responseTimes.length : null;
   const trend = useMemo(() => {
+    const reqs = usingDemo ? getDemoAdminRequests() : (requests ?? []);
     const today = new Date();
     const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
     const dayMs = 24 * 60 * 60 * 1000;
     const dayBins = Array.from({ length: 7 }, (_, i) => ({ start: todayUtc - (6 - i) * dayMs, count: 0 }));
     const weekBins = Array.from({ length: 4 }, (_, i) => ({ start: todayUtc - (27 - i * 7) * dayMs, end: todayUtc - (21 - i * 7) * dayMs, count: 0 }));
-    for (const request of displayRequests) {
+    for (const request of reqs) {
       const at = timestampMs(request.createdAt);
       if (at == null) continue;
       const day = Math.floor(at / dayMs) * dayMs;
@@ -79,7 +78,7 @@ export function AdminDashboardPage() {
       if (weekly) weekly.count++;
     }
     return { dayBins, weekBins };
-  }, [displayRequests]);
+  }, [usingDemo, requests]);
   const trendCards: { title: string; bins: { start: number; count: number }[]; label: (x: { start: number; count: number }) => string }[] = [
     { title: 'Requests per day · last 7 UTC days', bins: trend.dayBins, label: (x) => new Date(x.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }) },
     { title: 'Requests per week · last 4 UTC weeks', bins: trend.weekBins, label: (x) => new Date(x.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }) },
@@ -99,8 +98,12 @@ export function AdminDashboardPage() {
     return () => clearInterval(t);
   }, []);
   const exceptions = useMemo(
-    () => findExceptions(displayRequests, displayMechanics, nowMs),
-    [displayRequests, displayMechanics, nowMs],
+    () => {
+      const reqs = usingDemo ? getDemoAdminRequests() : (requests ?? []);
+      const mechs = usingDemo ? DEMO_ADMIN_MECHANICS : (mechanics ?? []);
+      return findExceptions(reqs, mechs, nowMs);
+    },
+    [usingDemo, requests, mechanics, nowMs],
   );
 
   return (

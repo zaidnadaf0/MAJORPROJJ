@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { watchAllUsers, type AdminUser } from '@/lib/admin';
 import { DEMO_ADMIN_USERS, getDemoAdminRequests } from '@/lib/fixtures';
@@ -8,18 +8,16 @@ import { DEMO_ADMIN_USERS, getDemoAdminRequests } from '@/lib/fixtures';
 /** User roster — hint fields only. No role editing here by design. */
 export function UsersPage() {
   const { demoMode } = useAuth();
-  const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [liveUsers, setLiveUsers] = useState<AdminUser[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const users = demoMode ? DEMO_ADMIN_USERS : liveUsers;
   const [feedError, setFeedError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (demoMode) {
-      setUsers(DEMO_ADMIN_USERS);
-      setFeedError(false);
-      return;
-    }
-    const unsub = watchAllUsers(setUsers, 100, () => setFeedError(true));
+    if (demoMode) return; // Already derived during render
+    const unsub = watchAllUsers(setLiveUsers, 100, () => setFeedError(true));
     return () => {
       if (unsub) unsub();
     };

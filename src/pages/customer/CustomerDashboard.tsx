@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, LoadingState, MetricCard, PageHeader, SectionHeading } from '@/components/ui';
 import { listVehicles, watchMyRequests, watchPublicMechanics, type PublicMechanic, type ServiceRequest, type Vehicle } from '@/lib/customer';

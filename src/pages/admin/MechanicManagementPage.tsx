@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { setMechanicApproval, watchAllMechanics, type AdminMechanic, type ApprovalAction } from '@/lib/admin';
 import { DEMO_ADMIN_MECHANICS } from '@/lib/fixtures';
-import type { RoutePageProps } from '@/routes';
+import type { RoutePageProps } from '@/lib/routeDefs';
 
 type Filter = 'pending' | 'approved' | 'suspended' | 'all';
 

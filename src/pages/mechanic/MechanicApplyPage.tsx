@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
-import { useMechanicAccess } from '@/components/RequireMechanic';
+import { useAuth } from '@/lib/useAuth';
+import { useMechanicAccess } from '@/lib/useMechanicAccess';
 import { Button, Card, EmptyState, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { applyAsMechanic } from '@/lib/mechanic';
 

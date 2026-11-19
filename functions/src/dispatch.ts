@@ -125,17 +125,24 @@ export function rankEligible(
 
 /** Read all plausibly-eligible mechanics (bounded; server filters the rest). */
 export async function loadCandidateMechanics(db: Firestore): Promise<MechanicProfile[]> {
-  const snap = await db.collection('mechanics').where('approved', '==', true).where('isAvailable', '==', true).limit(100).get();
+  const snap = await db.collection('mechanics').where('approved', '==', true).where('isAvailable', '==', true).limit(500).get();
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<MechanicProfile, 'id'>) }));
 }
 
-/** Count of live jobs per mechanic (bounded scan; keeps batches honest). */
+/** Count of live jobs per mechanic, using a server-maintained counter document.
+ * This avoids the truncated scan caused by limit(500) on the mechanics collection.
+ * Counter documents live at mechanicCounters/{mechanicId} and are kept in sync
+ * by the dispatch pipeline (createOfferBatch, acceptOffer, declineOffer, releaseJob,
+ * completeJob). The count is server-authoritative and does not depend on query-limited scans.
+ */
 export async function loadActiveCounts(db: Firestore): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
-  const snap = await db.collection('requests').where('status', 'in', ['accepted', 'on-the-way', 'arrived', 'service']).limit(100).get();
+  const snap = await db.collection('mechanicCounters').get();
   for (const d of snap.docs) {
-    const mid = (d.data() as ServiceRequest).mechanicId;
-    if (typeof mid === 'string' && mid) counts.set(mid, (counts.get(mid) ?? 0) + 1);
+    const data = d.data() as { activeJobCount: number; mechanicId: string };
+    if (data.mechanicId && typeof data.activeJobCount === 'number') {
+      counts.set(data.mechanicId, data.activeJobCount);
+    }
   }
   return counts;
 }
@@ -263,6 +270,10 @@ export async function acceptOfferTx(
       mechanicName: mech.name,
       updatedAt: FieldValue.serverTimestamp(),
     });
+    // Increment mechanic's active job counter (server-authoritative, replaces scan-based counting)
+    tx.set(db.collection('mechanicCounters').doc(mechanicId), {
+      activeJobCount: FieldValue.increment(1),
+    }, { merge: true });
     tx.update(offerRef, { status: 'accepted', updatedAt: FieldValue.serverTimestamp() });
     for (const d of others.docs) {
       if (d.id !== mechanicId) tx.update(d.ref, { status: 'superseded', updatedAt: FieldValue.serverTimestamp() });

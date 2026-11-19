@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { RequireMechanic } from '@/components/RequireMechanic';
 import { Badge, Button, Card, DemoNotice, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { watchIncoming, type ServiceRequest } from '@/lib/mechanic';

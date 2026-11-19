@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import { setMechanicApproval, watchAllMechanics, type AdminMechanic, type ApprovalAction } from '@/lib/admin';
 import { DEMO_ADMIN_MECHANICS } from '@/lib/fixtures';
-import type { RoutePageProps } from '@/routes';
+import type { RoutePageProps } from '@/lib/routeDefs';
 
 type Filter = 'pending' | 'approved' | 'suspended' | 'all';
 
@@ -28,7 +28,9 @@ const ACTIONS: { status: ApprovalAction; label: string; variant: 'primary' | 'se
  */
 export function MechanicManagementPage({ routePath }: Partial<RoutePageProps> = {}) {
   const { demoMode } = useAuth();
-  const [roster, setRoster] = useState<AdminMechanic[] | null>(null);
+  const [liveRoster, setLiveRoster] = useState<AdminMechanic[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const roster = demoMode ? DEMO_ADMIN_MECHANICS : liveRoster;
   const [filter, setFilter] = useState<Filter>(routePath === '/admin/approvals' ? 'pending' : 'all');
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -36,12 +38,8 @@ export function MechanicManagementPage({ routePath }: Partial<RoutePageProps> = 
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (demoMode) {
-      setRoster(DEMO_ADMIN_MECHANICS);
-      setFeedError(false);
-      return;
-    }
-    const unsub = watchAllMechanics(setRoster, 200, () => setFeedError(true));
+    if (demoMode) return; // Already derived during render
+    const unsub = watchAllMechanics(setLiveRoster, 200, () => setFeedError(true));
     return () => {
       if (unsub) unsub();
     };

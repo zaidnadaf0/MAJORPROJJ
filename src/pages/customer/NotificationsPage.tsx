@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
 import {
   countUnread,
@@ -12,7 +12,7 @@ import {
   type NotificationPortal,
 } from '@/lib/customer';
 import { DEMO_ADMIN_NOTIFICATIONS, DEMO_NOTIFICATIONS } from '@/lib/fixtures';
-import type { RoutePageProps } from '@/routes';
+import type { RoutePageProps } from '@/lib/routeDefs';
 
 /**
  * Shared inbox for all three portals. `portal` selects the role-safe link

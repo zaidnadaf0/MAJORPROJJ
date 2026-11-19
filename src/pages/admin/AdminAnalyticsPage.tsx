@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RequireAdmin } from '@/components/RequireAdmin';
 import { Card, DemoNotice, EmptyState, ErrorState, LoadingState, PageHeader } from '@/components/ui';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import {
   demand,
   downloadCsv,
@@ -85,35 +85,33 @@ function Table({ head, rows, empty }: { head: string[]; rows: (string | number)[
 export function AdminAnalyticsPage() {
   const { demoMode } = useAuth();
   const [windowId, setWindowId] = useState<'today' | 'd7' | 'd30' | 'all'>('d30');
-  const [requests, setRequests] = useState<AdminRequest[] | null>(null);
-  const [offers, setOffers] = useState<AdminOfferRow[] | null>(null);
-  const [mechanics, setMechanics] = useState<AdminMechanic[] | null>(null);
+  const [liveRequests, setLiveRequests] = useState<AdminRequest[] | null>(null);
+  const [liveOffers, setLiveOffers] = useState<AdminOfferRow[] | null>(null);
+  const [liveMechanics, setLiveMechanics] = useState<AdminMechanic[] | null>(null);
+  // Demo mode takes priority: derived during render — no setState in effect.
+  const requests = demoMode ? getDemoAdminRequests() : liveRequests;
+  const offers = demoMode ? getDemoAdminOffers() : liveOffers;
+  const mechanics = demoMode ? DEMO_ADMIN_MECHANICS : liveMechanics;
   const [feedError, setFeedError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setFeedError(false);
-    if (demoMode) {
-      setRequests(getDemoAdminRequests());
-      setOffers(getDemoAdminOffers());
-      setMechanics(DEMO_ADMIN_MECHANICS);
-      return () => { cancelled = true; };
-    }
+    if (demoMode) return; // Already derived during render
     listAllRequestsOnce('all', 200)
       .then((r) => {
-        if (!cancelled) setRequests(r);
+        if (!cancelled) setLiveRequests(r);
       })
       .catch(() => {
         if (!cancelled) {
-          setRequests([]);
+          setLiveRequests([]);
           setFeedError(true);
         }
       });
     const unsub = watchAllOffers((o) => {
-      if (!cancelled) setOffers(o);
+      if (!cancelled) setLiveOffers(o);
     }, 200, () => setFeedError(true));
     const unsubMechanics = watchAllMechanics((m) => {
-      if (!cancelled) setMechanics(m);
+      if (!cancelled) setLiveMechanics(m);
     }, 200, () => {
       if (!cancelled) setFeedError(true);
     });

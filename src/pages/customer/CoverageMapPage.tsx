@@ -4,7 +4,7 @@ import { Button, Card, EmptyState, ErrorState, LoadingState, PageHeader } from '
 import { DEFAULT_CENTER, DEFAULT_ZOOM } from '@/lib/mapProvider';
 import { watchPublicMechanics, type PublicMechanic } from '@/lib/customer';
 import { useGeolocation } from '@/lib/geolocation';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { FIXTURE_MECHANICS } from '@/lib/fixtures';
 
 const MapView = lazy(() => import('@/components/map/MapView').then((m) => ({ default: m.MapView })));

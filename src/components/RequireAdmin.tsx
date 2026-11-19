@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
+import { resolveAdminGate } from '@/lib/adminGate';
 import { EmptyState, LoadingState, PageHeader } from '@/components/ui';
 import { Button } from '@/components/ui';
 
@@ -13,14 +14,6 @@ import { Button } from '@/components/ui';
  * - claim true → render
  * - anything else (incl. users.role='admin' WITHOUT the claim) → blocked
  */
-export type AdminGate = 'loading' | 'allow' | 'deny';
-
-export function resolveAdminGate(authStatus: string, isAdmin: boolean | null): AdminGate {
-  if (authStatus === 'loading' || (authStatus === 'authenticated' && isAdmin === null)) return 'loading';
-  if (authStatus === 'authenticated' && isAdmin === true) return 'allow';
-  return 'deny';
-}
-
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { status, isAdmin, refreshClaim, signOut } = useAuth();
   const navigate = useNavigate();

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useAuth } from '@/app/AuthProvider';
+import { useAuth } from '@/lib/useAuth';
 import { Badge, Button, Card, DemoNotice, Field, Input, LoadingState, PageHeader } from '@/components/ui';
 import { getProfile, updateProfile } from '@/lib/customer';
 import { DEMO_CUSTOMER_PROFILE } from '@/lib/fixtures';
